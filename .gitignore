@@ -15,3 +15,5 @@
 
 # Always track .gitignore itself
 !.gitignore
+
+!README.md
