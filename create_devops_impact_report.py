@@ -392,7 +392,7 @@ def create_autodeploy_dashboard():
         }}
         
         .highlight {{
-            color: #4CAF50;
+            color: #86f2bd;
             font-weight: bold;
         }}
     </style>
@@ -409,11 +409,10 @@ def create_autodeploy_dashboard():
                 <img src="tonyengineering.png" alt="Tony Engineering" class="logo">
                 <h1>DevOps Best Practices Impact Report</h1>
             </div>
-            <p>Measuring the impact of <strong>DevOps best practices</strong> implementation for a client. <strong style="color: #dd7468;">Feature environments</strong> setup followed by <strong style="color: #dd7468;">continuous deployment</strong> to production (<strong>Auto-Deploy</strong>) on <strong style="color: #dd7468;">12 December 2023</strong> were a <strong>game changer</strong> in the Software Development Lifecycle.</p>
+            <p>Measuring the impact of <strong>DevOps best practices</strong> implementation for a client. <strong style="color: #86f2bd;">Feature environments</strong> setup followed by <strong style="color: #86f2bd;">continuous deployment</strong> to production (<strong>Auto-Deploy</strong>) on <strong style="color: #86f2bd;">12 December 2023</strong> were a <strong>game changer</strong> in the Software Development Lifecycle.</p>
             <p>This also showcases the importance of a strong <strong>automated testing culture</strong> and constant <strong>costs management optimization</strong>.</p>
-            <p>This transformation was conducted following <strong><a href="https://12factor.net/" target="_blank" style="color: #dd7468; text-decoration: none;">12-Factor App methodology</a></strong> and <strong>Expand/Contract patterns</strong> to minimize incidents (<strong style="color: #dd7468;">uptime > 99%</strong> for the period 2022-2025).</p>
-        </div>
-        
+            <p>This transformation was conducted following <strong><a href="https://12factor.net/" target="_blank" style="color: #86f2bd; text-decoration: none;">12-Factor App methodology</a></strong> and <strong><a href="https://www.prisma.io/dataguide/types/relational/expand-and-contract-pattern#what-is-the-expand-and-contract-pattern" target="_blank" style="color: #86f2bd; text-decoration: none;">Expand/Contract patterns</a></strong> to minimize incidents (<strong style="color: #86f2bd;">uptime > 99%</strong> for the period 2022-2025).</p>        </div>
+        <br>
         <div class="metrics-grid">
             <div class="metric-card">
                 <h3>📊 Completion Rate</h3>
