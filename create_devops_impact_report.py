@@ -1,11 +1,16 @@
 import pandas as pd
 import json
 from datetime import datetime
+from cost_savings_calculator import DevOpsCostSavingsCalculator
 
 def create_autodeploy_dashboard():
     """Create an interactive HTML dashboard showing auto-deploy impact"""
     
     print("Loading deployment pipeline data...")
+    
+    # Calculate cost savings
+    calculator = DevOpsCostSavingsCalculator()
+    cost_results = calculator.calculate_total_savings()
     
     # Read the refined data with ArgoCD fix logic applied
     df = pd.read_csv('deploy_prod_pipelines_2022_2025_argocd_refined.csv')
@@ -170,6 +175,10 @@ def create_autodeploy_dashboard():
                 'overall_failure_rate': pipeline_metrics['summary']['overall_failure_rate']
             }
         },
+        'cost_savings_data': {
+            'historical_actual_savings': float(cost_results['historical_actual_savings_2024_2025']),
+            'avg_monthly_savings': float(cost_results['key_metrics']['avg_monthly_savings_current'])
+        },
         'autodeploy_date': '2023-12'
     }
     
@@ -285,6 +294,18 @@ def create_autodeploy_dashboard():
             margin-bottom: 15px;
             font-size: 1.3rem;
             text-align: center;
+        }}
+        
+        .cost-savings-card {{
+            background: linear-gradient(135deg, #ffd93d 0%, #ff6b6b 100%);
+            color: white;
+            text-align: center;
+        }}
+        
+        .cost-savings-card h3,
+        .cost-savings-card .improvement-value,
+        .cost-savings-card .improvement-desc {{
+            color: white !important;
         }}
         
         .before-after {{
@@ -409,11 +430,22 @@ def create_autodeploy_dashboard():
                 <img src="tonyengineering.png" alt="Tony Engineering" class="logo">
                 <h1>DevOps Best Practices Impact Report</h1>
             </div>
-            <p>Measuring the impact of <strong>DevOps best practices</strong> implementation for a client. <strong style="color: #86f2bd;">Feature environments</strong> setup followed by <strong style="color: #86f2bd;">continuous deployment</strong> to production (<strong>Auto-Deploy</strong>) on <strong style="color: #86f2bd;">12 December 2023</strong> were a <strong>game changer</strong> in the Software Development Lifecycle.</p>
+            <p>Measuring the impact of <strong>DevOps best practices</strong> implementation for a client showing both <strong style="color: #86f2bd;">operational improvements</strong> and <strong style="color: #ffd93d;">financial impact</strong>. <strong style="color: #86f2bd;">Feature environments</strong> setup followed by <strong style="color: #86f2bd;">continuous deployment</strong> to production (<strong>Auto-Deploy</strong>) on <strong style="color: #86f2bd;">12 December 2023</strong> were a <strong>game changer</strong> in the Software Development Lifecycle.</p>
             <p>This also showcases the importance of a strong <strong>automated testing culture</strong> and constant <strong>costs management optimization</strong>.</p>
             <p>This transformation was conducted following <strong><a href="https://12factor.net/" target="_blank" style="color: #86f2bd; text-decoration: none;">12-Factor App methodology</a></strong> and <strong><a href="https://www.prisma.io/dataguide/types/relational/expand-and-contract-pattern#what-is-the-expand-and-contract-pattern" target="_blank" style="color: #86f2bd; text-decoration: none;">Expand/Contract patterns</a></strong> to minimize incidents (<strong style="color: #86f2bd;">uptime > 99%</strong> for the period 2022-2025).</p>        </div>
         <br>
+
         <div class="metrics-grid">
+                <div class="metric-card cost-savings-card">
+                    <h3>💰 Total estimated costs saving</h3>
+                    <div class="improvement-value" id="total-savings">-</div>
+                    <div class="improvement-desc">Historical Actual (2024-2025). <a href="https://github.com/Tony-Engineering-OU/devops-impact-report/blob/main/cost_savings_calculator.py"  target="_blank" style="color: #ffd93d; text-decoration: none;">Calculation details</a></div>
+                </div>
+            </div>
+
+        <div class="metrics-grid">
+            
+
             <div class="metric-card">
                 <h3>📊 Completion Rate</h3>
                 <div class="before-after">
@@ -458,6 +490,8 @@ def create_autodeploy_dashboard():
                 <div class="improvement-desc">Faster Deployments</div>
             </div>
         </div>
+        
+        
         
         <div class="charts-grid">
             <div class="chart-card">
@@ -533,6 +567,10 @@ def create_autodeploy_dashboard():
         document.getElementById('after-time').textContent = data.metrics.after.avg_deployment_days;
         document.getElementById('completion-improvement').textContent = data.improvements.completion_rate_multiplier + 'x';
         document.getElementById('speed-improvement').textContent = data.improvements.deployment_time_change_pct + '%';
+        
+        // Update cost savings metric (clean formatting)
+        const totalSavings = Math.round(data.cost_savings_data.historical_actual_savings);
+        document.getElementById('total-savings').textContent = '$' + (totalSavings/1000).toFixed(0) + 'K';
         
         
         // Find auto-deploy date index for vertical marker
