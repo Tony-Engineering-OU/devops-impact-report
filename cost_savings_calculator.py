@@ -5,18 +5,19 @@ import json
 
 class DevOpsCostSavingsCalculator:
     def __init__(self):
-        # Business assumptions adjusted for very small project scale
-        # Based on EC2 costs ~$1K/month peak, this is a small team/project
-        self.dev_hourly_rate = 25  # USD per hour (but limited time impact)
-        self.avg_team_size = 2  # Very small team based on deployment volume
+        self.dev_hourly_rate = 50 
         
-        # Incident costs (scaled down significantly)
-        self.incident_resolution_hours = 1  # Quick fixes for small project
-        self.incident_stakeholder_hours = 0.5  # Minimal stakeholder involvement
+        self.incident_resolution_hours = 1
+        self.incident_stakeholder_hours = 2  
         self.stakeholder_hourly_rate = 75  # USD per hour
         
+        # Impact factors (conservative estimates)
+        self.deployment_impact_factor = 0.15  # Only 15% of deployments have significant time impact
+        self.testing_reduction_factor = 0.2  # Only 20% reduction in manual testing
+        self.revenue_feature_factor = 0.1  # Only 10% of features generate revenue
+        
         # Opportunity costs (very conservative for small project)
-        self.revenue_per_feature_per_day = 10  # Small project revenue impact
+        self.revenue_per_feature_per_day = 30  # Small project revenue impact
         self.manual_testing_hours_saved = 2  # Realistic testing time saved
         
         # No projection factors - use simple calculation
@@ -55,6 +56,9 @@ class DevOpsCostSavingsCalculator:
         baseline_failure_rate = 0.941
         baseline_deployments_per_month = 25  # More realistic for small team
         
+        # Track total time saved
+        total_time_saved_days = 0
+        
         for _, row in monthly_stats.iterrows():
             month = row['year_month']
             is_post = row['is_post_autodeploy']
@@ -62,9 +66,15 @@ class DevOpsCostSavingsCalculator:
             if is_post:
                 # Calculate time savings (much more conservative)
                 time_saved_days = max(0, baseline_avg_days - row['avg_deployment_days'])
-                # Small project: developers don't spend full days waiting for deployments
-                time_savings_per_deployment = time_saved_days * 2 * self.dev_hourly_rate  # Only 2 hours per day actually saved
-                monthly_time_savings = time_savings_per_deployment * row['total_deployments'] * 0.3  # Only 30% of deployments have significant time impact
+                # Track cumulative time saved for this month (apply realistic factor)
+                monthly_time_saved_days = time_saved_days * row['total_deployments'] * self.deployment_impact_factor
+                total_time_saved_days += monthly_time_saved_days
+                
+                # Calculate monetary value of time savings (separate from time tracking)
+                # Assumption: developers save 2 productive hours per day of deployment time reduction
+                productive_hours_saved_per_day = 2  # Only 2 productive hours saved per day of reduction
+                monetary_value_per_deployment = time_saved_days * productive_hours_saved_per_day * self.dev_hourly_rate
+                monthly_time_savings = monetary_value_per_deployment * row['total_deployments'] * self.deployment_impact_factor
                 
                 # Calculate failure cost savings  
                 baseline_failures = baseline_deployments_per_month * baseline_failure_rate
@@ -81,14 +91,14 @@ class DevOpsCostSavingsCalculator:
                 manual_testing_savings = (
                     row['total_deployments'] * 
                     self.manual_testing_hours_saved * 
-                    self.dev_hourly_rate * 0.2  # Only 20% reduction in manual testing
+                    self.dev_hourly_rate * self.testing_reduction_factor
                 )
                 
                 # Opportunity cost savings (minimal for small project)
                 opportunity_savings = (
                     time_saved_days * 
                     row['total_deployments'] * 
-                    self.revenue_per_feature_per_day * 0.1  # Only 10% of features generate revenue
+                    self.revenue_per_feature_per_day * self.revenue_feature_factor
                 )
                 
                 total_monthly_savings = (
@@ -121,7 +131,7 @@ class DevOpsCostSavingsCalculator:
                 'avg_deployment_days': row['avg_deployment_days']
             })
         
-        return pd.DataFrame(savings_data)
+        return pd.DataFrame(savings_data), total_time_saved_days
     
     # Removed projections - only using historical actual data
     
@@ -129,19 +139,28 @@ class DevOpsCostSavingsCalculator:
         """Calculate and return only historical actual savings"""
         # Load data and calculate savings
         df, ec2_df = self.load_current_data()
-        historical_savings = self.calculate_monthly_savings(df, ec2_df)
+        historical_savings, total_time_saved_days = self.calculate_monthly_savings(df, ec2_df)
         
         # Historical actual savings (2024-2025 observed)
         historical_actual = historical_savings[historical_savings['is_post_autodeploy']]['net_savings'].sum()
         
+        # Convert calendar days to business hours and business days
+        total_time_saved_hours = total_time_saved_days * 24  # Total hours from calendar days
+        total_time_saved_business_days = total_time_saved_hours / 8  # Convert to 8-hour business days
+        
         results = {
             'historical_actual_savings_2024_2025': historical_actual,
             'historical_df': historical_savings,
+            'total_time_saved_calendar_days': total_time_saved_days,
+            'total_time_saved_hours': total_time_saved_hours,
+            'total_time_saved_business_days': total_time_saved_business_days,
             'key_metrics': {
                 'avg_monthly_savings_current': historical_savings[historical_savings['is_post_autodeploy']]['net_savings'].mean(),
                 'deployment_time_reduction_days': 6.5 - 2.8,
                 'failure_rate_reduction': 94.1 - 9.4,
-                'completion_rate_improvement': 90.6 - 5.9
+                'completion_rate_improvement': 90.6 - 5.9,
+                'total_time_saved_hours': total_time_saved_hours,
+                'total_time_saved_business_days': total_time_saved_business_days
             }
         }
         
@@ -162,6 +181,7 @@ def create_cost_savings_report():
     print(f"   • Deployment time reduced by: {metrics['deployment_time_reduction_days']:.1f} days")
     print(f"   • Failure rate reduced by: {metrics['failure_rate_reduction']:.1f} percentage points")  
     print(f"   • Completion rate improved by: {metrics['completion_rate_improvement']:.1f} percentage points")
+    print(f"   • Total time saved (2024-2025): {metrics['total_time_saved_business_days']:,.0f} business days ({metrics['total_time_saved_hours']:,.0f} hours)")
     print(f"   • Average monthly savings: ${metrics['avg_monthly_savings_current']:,.2f}")
     print()
     
@@ -171,12 +191,15 @@ def create_cost_savings_report():
     # Save summary JSON
     summary = {
         'historical_actual_savings_usd': float(results['historical_actual_savings_2024_2025']),
+        'total_time_saved_hours': float(results['total_time_saved_hours']),
+        'total_time_saved_calendar_days': float(results['total_time_saved_calendar_days']),
+        'total_time_saved_business_days': float(results['total_time_saved_business_days']),
         'calculation_date': datetime.now().isoformat(),
         'methodology': 'Developer time savings + failure cost reduction + testing efficiency + opportunity costs',
         'period': 'Historical actual data from 2024-2025 post-autodeploy implementation',
         'key_assumptions': {
             'dev_hourly_rate_usd': calculator.dev_hourly_rate,
-            'team_size': calculator.avg_team_size
+            'business_hours_per_day': 8
         }
     }
     

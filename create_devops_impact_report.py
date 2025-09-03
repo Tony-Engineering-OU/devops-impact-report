@@ -177,7 +177,8 @@ def create_autodeploy_dashboard():
         },
         'cost_savings_data': {
             'historical_actual_savings': float(cost_results['historical_actual_savings_2024_2025']),
-            'avg_monthly_savings': float(cost_results['key_metrics']['avg_monthly_savings_current'])
+            'avg_monthly_savings': float(cost_results['key_metrics']['avg_monthly_savings_current']),
+            'total_time_saved_business_days': float(cost_results['total_time_saved_business_days'])
         },
         'autodeploy_date': '2023-12'
     }
@@ -353,6 +354,12 @@ def create_autodeploy_dashboard():
             font-weight: bold;
             margin-bottom: 10px;
         }}
+
+        .improvement-value2 {{
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }}
         
         .improvement-desc {{
             font-size: 1.1rem;
@@ -437,9 +444,10 @@ def create_autodeploy_dashboard():
 
         <div class="metrics-grid">
                 <div class="metric-card cost-savings-card">
-                    <h3>💰 Total estimated costs saving</h3>
+                    <h3>💰 Total estimated savings for devs and data scientists</h3>
                     <div class="improvement-value" id="total-savings">-</div>
-                    <div class="improvement-desc">Historical Actual (2024-2025). <a href="https://github.com/Tony-Engineering-OU/devops-impact-report/blob/main/cost_savings_calculator.py"  target="_blank" style="color: #ffd93d; text-decoration: none;">Calculation details</a></div>
+                    <div class="improvement-value2" id="business-days-saved">-</div>
+                    <div class="improvement-desc">For period 2024-2025. <a href="https://github.com/Tony-Engineering-OU/devops-impact-report/blob/main/cost_savings_calculator.py"  target="_blank" style="color: #ffd93d; text-decoration: none;">Calculation details</a>.</div>
                 </div>
             </div>
 
@@ -571,6 +579,10 @@ def create_autodeploy_dashboard():
         // Update cost savings metric (clean formatting)
         const totalSavings = Math.round(data.cost_savings_data.historical_actual_savings);
         document.getElementById('total-savings').textContent = '$' + (totalSavings/1000).toFixed(0) + 'K';
+        
+        // Update business days saved
+        const businessDaysSaved = Math.round(data.cost_savings_data.total_time_saved_business_days);
+        document.getElementById('business-days-saved').textContent = businessDaysSaved.toLocaleString() + ' business days saved';
         
         
         // Find auto-deploy date index for vertical marker
